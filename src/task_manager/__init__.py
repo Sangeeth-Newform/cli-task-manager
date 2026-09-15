@@ -1,2 +1,3 @@
-def main() -> None:
-    print("Hello from task-manager!")
+from task_manager.cli import main
+
+__all__ = ["main"]

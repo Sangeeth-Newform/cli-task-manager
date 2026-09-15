@@ -146,12 +146,32 @@ class TaskManager:
         return results
 
     async def get_task(self, task_id: str) -> Task:
-        """Fetch a single task by ID, or raise TaskNotFoundError."""
+        """
+        Fetch a single task by full ID or unique short-prefix ID.
+
+        Supports prefix matching (like `git` short hashes) so users can
+        pass the shortened ID shown by the CLI's list command, not just
+        the full 36-character UUID.
+        """
         await self._load()
-        task = self._tasks.get(task_id)
-        if task is None:
-            raise TaskNotFoundError(f"No task found with id={task_id!r}")
-        return task
+
+        # First, try an exact match (covers full UUIDs).
+        exact_match = self._tasks.get(task_id)
+        if exact_match is not None:
+            return exact_match
+
+        # Fall back to prefix matching (covers short IDs like "c877f0dd").
+        matches = [t for t in self._tasks.values() if t.id.startswith(task_id)]
+
+        if len(matches) == 1:
+            return matches[0]
+        if len(matches) > 1:
+            raise TaskNotFoundError(
+                f"Ambiguous task id={task_id!r} matches {len(matches)} tasks. "
+                "Please provide more characters."
+            )
+
+        raise TaskNotFoundError(f"No task found with id={task_id!r}")
 
     async def update_task(
         self,
@@ -188,7 +208,7 @@ class TaskManager:
         return task
 
     async def delete_task(self, task_id: str) -> None:
-        """Delete a task by ID. Raises TaskNotFoundError if it doesn't exist."""
-        await self.get_task(task_id)  # validates existence, raises if missing
-        del self._tasks[task_id]
+        """Delete a task by full ID or unique short-prefix ID."""
+        task = await self.get_task(task_id)  # resolves short prefix -> full Task
+        del self._tasks[task.id]             # use the RESOLVED full id, not the raw input
         await self._save()
