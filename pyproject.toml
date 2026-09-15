@@ -26,6 +26,9 @@ target-version = "py312"
 # rules we fixed earlier). B = bugbear (catches common real bugs).
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+
 [dependency-groups]
 dev = [
     "pre-commit>=4.6.2",
