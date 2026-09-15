@@ -138,7 +138,8 @@ class TaskManager:
         if keyword is not None:
             keyword_lower = keyword.lower()
             results = [
-                t for t in results
+                t
+                for t in results
                 if keyword_lower in t.title.lower()
                 or (t.description and keyword_lower in t.description.lower())
             ]
@@ -210,5 +211,5 @@ class TaskManager:
     async def delete_task(self, task_id: str) -> None:
         """Delete a task by full ID or unique short-prefix ID."""
         task = await self.get_task(task_id)  # resolves short prefix -> full Task
-        del self._tasks[task.id]             # use the RESOLVED full id, not the raw input
+        del self._tasks[task.id]  # use the RESOLVED full id, not the raw input
         await self._save()

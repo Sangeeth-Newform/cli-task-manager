@@ -12,12 +12,12 @@ from __future__ import (
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import uuid4
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
     """
     The lifecycle states a task can be in.
 
@@ -25,13 +25,15 @@ class TaskStatus(str, Enum):
     behaves like the string "pending" when saved to JSON or printed —
     this makes serialization trivial (no custom encoder needed).
     """
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
 
 
-class TaskPriority(str, Enum):
+class TaskPriority(StrEnum):
     """The urgency level of a task. Same str+Enum trick as TaskStatus."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"

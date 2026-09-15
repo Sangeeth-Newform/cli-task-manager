@@ -18,12 +18,12 @@ from task_manager.task_manager import TaskManager, TaskNotFoundError
 # Output formatting helpers
 # ----------------------------------------------------------------------
 
+
 def format_task(task: Task) -> str:
     """Render a single Task as a clean, human-readable line."""
     short_id = task.id[:8]  # show only the first 8 chars — full UUIDs are noisy to read
     return (
-        f"[{short_id}] {task.title}  "
-        f"(status={task.status.value}, priority={task.priority.value})"
+        f"[{short_id}] {task.title}  (status={task.status.value}, priority={task.priority.value})"
     )
 
 
@@ -39,6 +39,7 @@ def print_task_list(tasks: list[Task]) -> None:
 # ----------------------------------------------------------------------
 # Async command handlers — one per subcommand
 # ----------------------------------------------------------------------
+
 
 async def cmd_add(args: argparse.Namespace, manager: TaskManager) -> None:
     task = await manager.add_task(
@@ -82,6 +83,7 @@ async def cmd_delete(args: argparse.Namespace, manager: TaskManager) -> None:
 # Argument parser construction
 # ----------------------------------------------------------------------
 
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the full argparse parser with all subcommands."""
     parser = argparse.ArgumentParser(
@@ -105,15 +107,20 @@ def build_parser() -> argparse.ArgumentParser:
     # --- list ---
     list_parser = subparsers.add_parser("list", help="List tasks, with optional filters")
     list_parser.add_argument(
-        "--status", choices=[s.value for s in TaskStatus], default=None,
+        "--status",
+        choices=[s.value for s in TaskStatus],
+        default=None,
         help="Filter by status",
     )
     list_parser.add_argument(
-        "--priority", choices=[p.value for p in TaskPriority], default=None,
+        "--priority",
+        choices=[p.value for p in TaskPriority],
+        default=None,
         help="Filter by priority",
     )
     list_parser.add_argument(
-        "--keyword", default=None,
+        "--keyword",
+        default=None,
         help="Filter by keyword found in title or description",
     )
     list_parser.set_defaults(func=cmd_list)
@@ -124,7 +131,9 @@ def build_parser() -> argparse.ArgumentParser:
     update_parser.add_argument("--title", default=None, help="New title")
     update_parser.add_argument("--description", default=None, help="New description")
     update_parser.add_argument(
-        "--priority", choices=[p.value for p in TaskPriority], default=None,
+        "--priority",
+        choices=[p.value for p in TaskPriority],
+        default=None,
         help="New priority",
     )
     update_parser.set_defaults(func=cmd_update)
@@ -145,6 +154,7 @@ def build_parser() -> argparse.ArgumentParser:
 # ----------------------------------------------------------------------
 # Entry point
 # ----------------------------------------------------------------------
+
 
 async def _run(args: argparse.Namespace) -> None:
     """The single async entry point — this is where asyncio.run() lands."""

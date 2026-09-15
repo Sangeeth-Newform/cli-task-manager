@@ -15,3 +15,21 @@ task-manager = "task_manager:main"
 [build-system]
 requires = ["uv_build>=0.12.15,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# E, F = pyflakes/pycodestyle basics. I = import sorting (the I001 rule
+# we kept seeing). UP = pyupgrade (modern syntax, like the UP045/UP017
+# rules we fixed earlier). B = bugbear (catches common real bugs).
+select = ["E", "F", "I", "UP", "B"]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.2",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.7",
+]
