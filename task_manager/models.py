@@ -14,7 +14,15 @@ T = TypeVar("T")
 
 
 def filter_items(items: list[T], condition: Optional[Callable[[T], bool]] = None) -> list[T]:
-    """Filter a list of items using an optional condition."""
+    """Filter a list of items using an optional condition.
+
+    Args:
+        items: The list to filter.
+        condition: A function that returns True for items to keep. If None, nothing is removed.
+
+    Returns:
+        The items that satisfy the condition, or the original list if no condition is given.
+    """
     if condition is None:
         return items
     return [item for item in items if condition(item)]
@@ -25,6 +33,17 @@ def filter_items(items: list[T], condition: Optional[Callable[[T], bool]] = None
 
 @dataclass
 class Task:
+    """A single task stored by the task manager.
+
+    Attributes:
+        title: Short name of the task.
+        id: Unique 8-character identifier, generated automatically.
+        description: Optional extra notes.
+        status: Usually "pending" or "completed".
+        priority: Usually "low", "medium" or "high".
+        created_at: UTC creation time formatted as "YYYY-MM-DD HH:MM".
+    """
+
     title: str
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
     description: Optional[str] = None
@@ -33,6 +52,11 @@ class Task:
     created_at: str = field(default_factory=lambda: datetime.now(UTC).strftime("%Y-%m-%d %H:%M"))
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert the task to a plain dictionary for JSON storage.
+
+        Returns:
+            A dictionary containing every task field.
+        """
         return {
             "id": self.id,
             "title": self.title,
@@ -44,6 +68,15 @@ class Task:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Task:
+        """Build a task from a dictionary read from the JSON file.
+
+        Args:
+            data: A dictionary with at least the "id" and "title" keys. Other missing
+                keys fall back to their default values.
+
+        Returns:
+            A new Task instance.
+        """
         return cls(
             id=data["id"],
             title=data["title"],
