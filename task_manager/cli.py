@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from typing import Optional
 
 import typer
@@ -10,7 +11,15 @@ import typer
 from task_manager.config import get_file_path
 from task_manager.manager import TaskManager
 
+logger = logging.getLogger(__name__)
+
 app = typer.Typer(help="My command-line task manager.", add_completion=False)
+
+
+@app.callback()
+def configure_logging() -> None:
+    """Set up logging once, before any command runs."""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 
 @app.command()
@@ -23,7 +32,7 @@ def add(
     """Create a new task."""
     manager = TaskManager(get_file_path(file))
     task = asyncio.run(manager.add_task(title, description, priority))
-    print(f"[OK] Task successfully created! (ID: {task.id})")
+    logger.info("Task successfully created! (ID: %s)", task.id)
 
 
 @app.command(name="list")
@@ -38,16 +47,22 @@ def list_tasks(
     tasks = asyncio.run(manager.list_tasks(status, priority, keyword))
 
     if not tasks:
-        print("No tasks found matching your search.")
+        logger.info("No tasks found matching your search.")
         return
 
-    # Print a clean, formatted table
-    print(f"\n{'ID':<10} {'Title':<28} {'Status':<12} {'Priority':<10} {'Created At'}")
-    print("-" * 75)
+    # Log a clean, formatted table
+    logger.info("%-10s %-28s %-12s %-10s %s", "ID", "Title", "Status", "Priority", "Created At")
+    logger.info("-" * 75)
     for task in tasks:
         title = task.title if len(task.title) <= 26 else task.title[:25] + ".."
-        print(f"{task.id:<10} {title:<28} {task.status:<12} {task.priority:<10} {task.created_at}")
-    print()
+        logger.info(
+            "%-10s %-28s %-12s %-10s %s",
+            task.id,
+            title,
+            task.status,
+            task.priority,
+            task.created_at,
+        )
 
 
 @app.command()
@@ -63,9 +78,9 @@ def update(
     manager = TaskManager(get_file_path(file))
     task = asyncio.run(manager.update_task(task_id, title, description, status, priority))
     if task:
-        print(f"[OK] Task '{task.id}' successfully updated!")
+        logger.info("Task '%s' successfully updated!", task.id)
     else:
-        print(f"Error: Could not find task with ID '{task_id}'.")
+        logger.error("Could not find task with ID '%s'.", task_id)
 
 
 @app.command()
@@ -77,9 +92,9 @@ def complete(
     manager = TaskManager(get_file_path(file))
     task = asyncio.run(manager.complete_task(task_id))
     if task:
-        print(f"[OK] Great job! Task '{task.id}' marked as completed.")
+        logger.info("Great job! Task '%s' marked as completed.", task.id)
     else:
-        print(f"Error: Could not find task with ID '{task_id}'.")
+        logger.error("Could not find task with ID '%s'.", task_id)
 
 
 @app.command()
@@ -91,6 +106,6 @@ def delete(
     manager = TaskManager(get_file_path(file))
     success = asyncio.run(manager.delete_task(task_id))
     if success:
-        print(f"[OK] Task '{task_id}' was deleted.")
+        logger.info("Task '%s' was deleted.", task_id)
     else:
-        print(f"Error: Could not find task with ID '{task_id}'.")
+        logger.error("Could not find task with ID '%s'.", task_id)
