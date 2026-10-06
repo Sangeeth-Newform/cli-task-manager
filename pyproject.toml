@@ -62,6 +62,7 @@ line_length = 100
 known_first_party = ["task_manager"]
 
 [tool.vulture]
-paths = ["task_manager", "tests", "main.py"]
+paths = ["."]
+exclude = [".venv/", ".pytest_tmp/", ".pytest_cache/", ".ruff_cache/"]
 min_confidence = 80
 ignore_decorators = ["@app.*", "@pytest.fixture"]
