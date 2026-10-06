@@ -32,8 +32,21 @@ line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "B"]
-ignore = ["B008"]
+# Selected linters:
+# "E", "W": pycodestyle errors and warnings
+# "F": Pyflakes (detects unused imports, undefined variables, etc.)
+# "I": isort (sorts and formats imports)
+# "B": flake8-bugbear (finds potential bugs and design flaws)
+# "D": pydocstyle (enforces docstring style standards)
+select = ["E", "W", "F", "I", "B", "D"]
+
+# Ignored rules:
+# B008: Do not perform function call in argument defaults (required for Typer / FastAPI dependencies)
+# D100: Missing docstring in public module
+# D104: Missing docstring in public package
+# D203: Incorrect blank line before class (conflicts with D211)
+# D213: Multi-line summary second line (conflicts with D212)
+ignore = ["B008", "D100", "D104", "D203", "D213"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
