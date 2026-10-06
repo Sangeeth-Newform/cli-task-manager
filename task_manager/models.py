@@ -6,6 +6,7 @@ import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any, Optional, TypeVar
 
 # Generic filter function
@@ -29,6 +30,21 @@ def filter_items(items: list[T], condition: Optional[Callable[[T], bool]] = None
     return [item for item in items if condition(item)]
 
 
+class Status(StrEnum):
+    """Allowed states of a task."""
+
+    PENDING = "pending"
+    COMPLETED = "completed"
+
+
+class Priority(StrEnum):
+    """Allowed priorities of a task."""
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
 # Task model
 
 
@@ -40,8 +56,8 @@ class Task:
         title: Short name of the task.
         id: Unique 8-character identifier, generated automatically.
         description: Optional extra notes.
-        status: Usually "pending" or "completed".
-        priority: Usually "low", "medium" or "high".
+        status: Current state of the task.
+        priority: How important the task is.
         created_at: UTC creation time formatted as "YYYY-MM-DD HH:MM".
 
     """
@@ -49,9 +65,19 @@ class Task:
     title: str
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
     description: Optional[str] = None
-    status: str = "pending"
-    priority: str = "medium"
+    status: Status = Status.PENDING
+    priority: Priority = Priority.MEDIUM
     created_at: str = field(default_factory=lambda: datetime.now(UTC).strftime("%Y-%m-%d %H:%M"))
+
+    def __post_init__(self) -> None:
+        """Convert status and priority to enums and reject invalid values.
+
+        Raises:
+            ValueError: If status or priority is not an allowed value.
+
+        """
+        self.status = Status(self.status)
+        self.priority = Priority(self.priority)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the task to a plain dictionary for JSON storage.
@@ -64,8 +90,8 @@ class Task:
             "id": self.id,
             "title": self.title,
             "description": self.description,
-            "status": self.status,
-            "priority": self.priority,
+            "status": self.status.value,
+            "priority": self.priority.value,
             "created_at": self.created_at,
         }
 
@@ -80,12 +106,15 @@ class Task:
         Returns:
             A new Task instance.
 
+        Raises:
+            ValueError: If the status or priority in the data is not an allowed value.
+
         """
         return cls(
             id=data["id"],
             title=data["title"],
             description=data.get("description"),
-            status=data.get("status", "pending"),
-            priority=data.get("priority", "medium"),
+            status=data.get("status", Status.PENDING),
+            priority=data.get("priority", Priority.MEDIUM),
             created_at=data.get("created_at", ""),
         )
