@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Optional, TypeVar
 
-# ── Generic Filter Function ───────────────────────────────────────────────────
+# Generic filter function
 
 T = TypeVar("T")
 
@@ -22,13 +22,14 @@ def filter_items(items: list[T], condition: Optional[Callable[[T], bool]] = None
 
     Returns:
         The items that satisfy the condition, or the original list if no condition is given.
+
     """
     if condition is None:
         return items
     return [item for item in items if condition(item)]
 
 
-# ── Task Model ────────────────────────────────────────────────────────────────
+# Task model
 
 
 @dataclass
@@ -42,6 +43,7 @@ class Task:
         status: Usually "pending" or "completed".
         priority: Usually "low", "medium" or "high".
         created_at: UTC creation time formatted as "YYYY-MM-DD HH:MM".
+
     """
 
     title: str
@@ -56,6 +58,7 @@ class Task:
 
         Returns:
             A dictionary containing every task field.
+
         """
         return {
             "id": self.id,
@@ -76,6 +79,7 @@ class Task:
 
         Returns:
             A new Task instance.
+
         """
         return cls(
             id=data["id"],
