@@ -5,3 +5,21 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+  - repo: local
+    hooks:
+      - id: isort
+        name: isort
+        entry: uv run isort
+        language: system
+        types: [python]
+      - id: flake8
+        name: flake8
+        entry: uv run flake8
+        language: system
+        types: [python]
+      - id: vulture
+        name: vulture
+        entry: uv run vulture
+        language: system
+        types: [python]
+        pass_filenames: false
