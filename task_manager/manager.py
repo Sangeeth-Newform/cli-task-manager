@@ -19,6 +19,7 @@ class TaskManager:
 
         Args:
             file_path: Path to the JSON file that holds the tasks.
+
         """
         self.file_path = file_path
 
@@ -30,6 +31,7 @@ class TaskManager:
 
         Raises:
             json.JSONDecodeError: If the file contains invalid JSON.
+
         """
         if not self.file_path.exists():
             return []
@@ -48,6 +50,7 @@ class TaskManager:
 
         Args:
             all_tasks: The complete list of tasks to save. It replaces the file contents.
+
         """
         async with aiofiles.open(self.file_path, mode="w", encoding="utf-8") as f:
             text = json.dumps([t.to_dict() for t in all_tasks], indent=2)
@@ -68,6 +71,7 @@ class TaskManager:
 
         Returns:
             The newly created task.
+
         """
         all_tasks = await self.load_tasks()
         task = Task(title=title, description=description, priority=priority.lower())
@@ -83,6 +87,7 @@ class TaskManager:
 
         Returns:
             The first matching task, or None if nothing matches.
+
         """
         all_tasks = await self.load_tasks()
         clean_id = task_id.strip().lower()
@@ -106,6 +111,7 @@ class TaskManager:
 
         Returns:
             The tasks that match every filter that was given.
+
         """
         all_tasks = await self.load_tasks()
 
@@ -148,6 +154,7 @@ class TaskManager:
 
         Returns:
             The updated task, or None if no task matches the ID.
+
         """
         all_tasks = await self.load_tasks()
         target_task = None
@@ -181,6 +188,7 @@ class TaskManager:
 
         Returns:
             The updated task, or None if no task matches the ID.
+
         """
         return await self.update_task(task_id, status="completed")
 
@@ -192,6 +200,7 @@ class TaskManager:
 
         Returns:
             True if a task was deleted, False if nothing matched.
+
         """
         all_tasks = await self.load_tasks()
         clean_id = task_id.strip().lower()
