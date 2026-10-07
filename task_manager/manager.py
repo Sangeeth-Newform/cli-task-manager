@@ -194,7 +194,7 @@ class TaskManager:
         return await self.update_task(task_id, status=Status.COMPLETED)
 
     async def delete_task(self, task_id: str) -> bool:
-        """Delete every task whose ID matches the given ID or prefix.
+        """Delete the first task whose ID matches the given ID or prefix.
 
         Args:
             task_id: The full task ID or a prefix of it.
@@ -205,14 +205,9 @@ class TaskManager:
         """
         all_tasks = await self.load_tasks()
         clean_id = task_id.strip().lower()
-        kept_tasks = [
-            t
-            for t in all_tasks
-            if not (t.id.lower() == clean_id or t.id.lower().startswith(clean_id))
-        ]
-
-        if len(kept_tasks) == len(all_tasks):
-            return False
-
-        await self.save_tasks(kept_tasks)
-        return True
+        for index, task in enumerate(all_tasks):
+            if task.id.lower() == clean_id or task.id.lower().startswith(clean_id):
+                del all_tasks[index]
+                await self.save_tasks(all_tasks)
+                return True
+        return False
