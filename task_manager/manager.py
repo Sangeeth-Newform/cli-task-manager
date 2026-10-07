@@ -4,11 +4,26 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Final, Optional
 
 import aiofiles
 
-from task_manager.models import Priority, Status, Task, filter_items
+from task_manager.models import Priority, Status, Task, filter_items, validate_title
+
+
+class Unset:
+    """Marker type for an argument that the caller did not pass.
+
+    It lets update_task tell "leave the description unchanged" (UNSET) apart from
+    "clear the description" (None).
+    """
+
+    def __repr__(self) -> str:
+        """Show a readable name in error messages and the debugger."""
+        return "UNSET"
+
+
+UNSET: Final = Unset()
 
 
 class TaskManager:
@@ -72,6 +87,9 @@ class TaskManager:
 
         Returns:
             The newly created task.
+
+        Raises:
+            ValueError: If the title is blank.
 
         """
         all_tasks = await self.load_tasks()
@@ -138,25 +156,33 @@ class TaskManager:
         self,
         task_id: str,
         title: Optional[str] = None,
-        description: Optional[str] = None,
+        description: str | None | Unset = UNSET,
         status: Optional[Status] = None,
         priority: Optional[Priority] = None,
     ) -> Optional[Task]:
         """Update the fields of an existing task and save the change.
 
-        Only the fields that are not None are changed.
+        Title, status and priority are changed only when they are not None.
+        The description is changed only when it is passed: a string replaces it
+        and None clears it. When it is left out (UNSET) it stays the same.
 
         Args:
             task_id: The full task ID or a prefix of it.
-            title: New title.
-            description: New description.
+            title: New title. It must not be blank.
+            description: New description, None to clear it, or UNSET to keep it.
             status: New status.
             priority: New priority.
 
         Returns:
             The updated task, or None if no task matches the ID.
 
+        Raises:
+            ValueError: If the new title is blank.
+
         """
+        if title is not None:
+            title = validate_title(title)
+
         all_tasks = await self.load_tasks()
         target_task = None
 
@@ -171,7 +197,7 @@ class TaskManager:
 
         if title is not None:
             target_task.title = title
-        if description is not None:
+        if not isinstance(description, Unset):
             target_task.description = description
         if status is not None:
             target_task.status = status
