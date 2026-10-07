@@ -9,8 +9,8 @@ from typing import Optional
 import typer
 
 from task_manager.config import get_file_path
-from task_manager.manager import TaskManager
-from task_manager.models import Priority, Status
+from task_manager.manager import UNSET, TaskManager, Unset
+from task_manager.models import Priority, Status, validate_title
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,11 @@ def add(
 ) -> None:
     """Create a new task."""
     manager = TaskManager(get_file_path(file))
-    task = asyncio.run(manager.add_task(title, description, priority))
+    try:
+        task = asyncio.run(manager.add_task(title, description, priority))
+    except ValueError as error:
+        logger.error("%s", error)
+        raise typer.Exit(code=1) from error
     logger.info("Task successfully created! (ID: %s)", task.id)
 
 
@@ -77,6 +81,9 @@ def update(
     task_id: str = typer.Argument(..., help="ID or prefix of the task to update"),
     title: Optional[str] = typer.Option(None, "-t", "--title", help="New title"),
     description: Optional[str] = typer.Option(None, "-d", "--description", help="New notes"),
+    clear_description: bool = typer.Option(
+        False, "--clear-description", help="Remove the notes from the task"
+    ),
     status: Optional[Status] = typer.Option(
         None, "-s", "--status", case_sensitive=False, help="New status"
     ),
@@ -87,6 +94,25 @@ def update(
     file: Optional[str] = typer.Option(None, "--file", help="Custom tasks file path"),
 ) -> None:
     """Update an existing task after asking for confirmation."""
+    if description is not None and clear_description:
+        logger.error("Use either --description or --clear-description, not both.")
+        raise typer.Exit(code=1)
+
+    nothing_given = all(value is None for value in (title, description, status, priority))
+    if nothing_given and not clear_description:
+        logger.error(
+            "Nothing to update. Give --title, --description, --clear-description, "
+            "--status or --priority."
+        )
+        raise typer.Exit(code=1)
+
+    if title is not None:
+        try:
+            validate_title(title)
+        except ValueError as error:
+            logger.error("%s", error)
+            raise typer.Exit(code=1) from error
+
     manager = TaskManager(get_file_path(file))
     task = asyncio.run(manager.find_task(task_id))
     if task is None:
@@ -97,7 +123,16 @@ def update(
         logger.info("Cancelled. Nothing was changed.")
         return
 
-    asyncio.run(manager.update_task(task.id, title, description, status, priority))
+    # Not given -> keep the old notes (UNSET). --clear-description -> remove them (None).
+    new_description: str | None | Unset
+    if clear_description:
+        new_description = None
+    elif description is None:
+        new_description = UNSET
+    else:
+        new_description = description
+
+    asyncio.run(manager.update_task(task.id, title, new_description, status, priority))
     logger.info("Task '%s' successfully updated!", task.id)
 
 
