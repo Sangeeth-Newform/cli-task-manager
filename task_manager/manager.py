@@ -8,7 +8,7 @@ from typing import Optional
 
 import aiofiles
 
-from task_manager.models import Task, filter_items
+from task_manager.models import Priority, Status, Task, filter_items
 
 
 class TaskManager:
@@ -19,6 +19,7 @@ class TaskManager:
 
         Args:
             file_path: Path to the JSON file that holds the tasks.
+
         """
         self.file_path = file_path
 
@@ -30,6 +31,8 @@ class TaskManager:
 
         Raises:
             json.JSONDecodeError: If the file contains invalid JSON.
+            ValueError: If a saved task has an invalid status or priority.
+
         """
         if not self.file_path.exists():
             return []
@@ -48,6 +51,7 @@ class TaskManager:
 
         Args:
             all_tasks: The complete list of tasks to save. It replaces the file contents.
+
         """
         async with aiofiles.open(self.file_path, mode="w", encoding="utf-8") as f:
             text = json.dumps([t.to_dict() for t in all_tasks], indent=2)
@@ -57,20 +61,21 @@ class TaskManager:
         self,
         title: str,
         description: Optional[str] = None,
-        priority: str = "medium",
+        priority: Priority = Priority.MEDIUM,
     ) -> Task:
         """Create a new task and save it.
 
         Args:
             title: Short name of the task.
             description: Optional extra notes.
-            priority: Task priority. It is stored in lowercase.
+            priority: How important the task is.
 
         Returns:
             The newly created task.
+
         """
         all_tasks = await self.load_tasks()
-        task = Task(title=title, description=description, priority=priority.lower())
+        task = Task(title=title, description=description, priority=priority)
         all_tasks.append(task)
         await self.save_tasks(all_tasks)
         return task
@@ -83,6 +88,7 @@ class TaskManager:
 
         Returns:
             The first matching task, or None if nothing matches.
+
         """
         all_tasks = await self.load_tasks()
         clean_id = task_id.strip().lower()
@@ -93,8 +99,8 @@ class TaskManager:
 
     async def list_tasks(
         self,
-        status: Optional[str] = None,
-        priority: Optional[str] = None,
+        status: Optional[Status] = None,
+        priority: Optional[Priority] = None,
         keyword: Optional[str] = None,
     ) -> list[Task]:
         """List tasks, optionally filtered by status, priority and keyword.
@@ -106,14 +112,15 @@ class TaskManager:
 
         Returns:
             The tasks that match every filter that was given.
+
         """
         all_tasks = await self.load_tasks()
 
         if status:
-            all_tasks = filter_items(all_tasks, lambda t: t.status.lower() == status.lower())
+            all_tasks = filter_items(all_tasks, lambda t: t.status == status)
 
         if priority:
-            all_tasks = filter_items(all_tasks, lambda t: t.priority.lower() == priority.lower())
+            all_tasks = filter_items(all_tasks, lambda t: t.priority == priority)
 
         if keyword:
             kw = keyword.lower()
@@ -132,8 +139,8 @@ class TaskManager:
         task_id: str,
         title: Optional[str] = None,
         description: Optional[str] = None,
-        status: Optional[str] = None,
-        priority: Optional[str] = None,
+        status: Optional[Status] = None,
+        priority: Optional[Priority] = None,
     ) -> Optional[Task]:
         """Update the fields of an existing task and save the change.
 
@@ -143,11 +150,12 @@ class TaskManager:
             task_id: The full task ID or a prefix of it.
             title: New title.
             description: New description.
-            status: New status. It is stored in lowercase.
-            priority: New priority. It is stored in lowercase.
+            status: New status.
+            priority: New priority.
 
         Returns:
             The updated task, or None if no task matches the ID.
+
         """
         all_tasks = await self.load_tasks()
         target_task = None
@@ -166,9 +174,9 @@ class TaskManager:
         if description is not None:
             target_task.description = description
         if status is not None:
-            target_task.status = status.lower()
+            target_task.status = status
         if priority is not None:
-            target_task.priority = priority.lower()
+            target_task.priority = priority
 
         await self.save_tasks(all_tasks)
         return target_task
@@ -181,28 +189,25 @@ class TaskManager:
 
         Returns:
             The updated task, or None if no task matches the ID.
+
         """
-        return await self.update_task(task_id, status="completed")
+        return await self.update_task(task_id, status=Status.COMPLETED)
 
     async def delete_task(self, task_id: str) -> bool:
-        """Delete every task whose ID matches the given ID or prefix.
+        """Delete the first task whose ID matches the given ID or prefix.
 
         Args:
             task_id: The full task ID or a prefix of it.
 
         Returns:
             True if a task was deleted, False if nothing matched.
+
         """
         all_tasks = await self.load_tasks()
         clean_id = task_id.strip().lower()
-        kept_tasks = [
-            t
-            for t in all_tasks
-            if not (t.id.lower() == clean_id or t.id.lower().startswith(clean_id))
-        ]
-
-        if len(kept_tasks) == len(all_tasks):
-            return False
-
-        await self.save_tasks(kept_tasks)
-        return True
+        for index, task in enumerate(all_tasks):
+            if task.id.lower() == clean_id or task.id.lower().startswith(clean_id):
+                del all_tasks[index]
+                await self.save_tasks(all_tasks)
+                return True
+        return False

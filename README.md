@@ -63,9 +63,10 @@ Project3/
 ## Development Commands
 
 - `make install` - Set up virtual environment and install packages
-- `make lint` - Check code style with Ruff
-- `make test` - Run pytest test suite
-- `make run` - Show CLI help menu
+- `make lint` - Run ruff, isort, flake8 and vulture
+- `make format` - Auto-fix formatting and import order
+- `make test` - Run pytest (extra options: `make test ARGS="-k filter"`)
+- `make run` - Show CLI help, or run a command: `make run ARGS="list --status pending"`
 
 ## Tech Stack
 
