@@ -30,6 +30,25 @@ def filter_items(items: list[T], condition: Optional[Callable[[T], bool]] = None
     return [item for item in items if condition(item)]
 
 
+def validate_title(title: str) -> str:
+    """Check that a task title is not blank.
+
+    Args:
+        title: The title to check.
+
+    Returns:
+        The title without leading and trailing spaces.
+
+    Raises:
+        ValueError: If the title is empty or contains only spaces.
+
+    """
+    cleaned = title.strip()
+    if not cleaned:
+        raise ValueError("Task title cannot be blank.")
+    return cleaned
+
+
 class Status(StrEnum):
     """Allowed states of a task."""
 
@@ -70,12 +89,13 @@ class Task:
     created_at: str = field(default_factory=lambda: datetime.now(UTC).strftime("%Y-%m-%d %H:%M"))
 
     def __post_init__(self) -> None:
-        """Convert status and priority to enums and reject invalid values.
+        """Clean the title, convert status and priority to enums and reject invalid values.
 
         Raises:
-            ValueError: If status or priority is not an allowed value.
+            ValueError: If the title is blank, or status or priority is not an allowed value.
 
         """
+        self.title = validate_title(self.title)
         self.status = Status(self.status)
         self.priority = Priority(self.priority)
 
@@ -107,7 +127,7 @@ class Task:
             A new Task instance.
 
         Raises:
-            ValueError: If the status or priority in the data is not an allowed value.
+            ValueError: If the title is blank, or the status or priority is not an allowed value.
 
         """
         return cls(
