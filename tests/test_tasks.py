@@ -30,9 +30,9 @@ def test_task_creation() -> None:
 def test_task_rejects_invalid_values() -> None:
     """A task with an unknown status or priority raises ValueError."""
     with pytest.raises(ValueError, match="not a valid Priority"):
-        Task(title="Bad priority", priority="urgent")
+        Task(title="Bad priority", priority="urgent")  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="not a valid Status"):
-        Task(title="Bad status", status="done")
+        Task(title="Bad status", status="done")  # type: ignore[arg-type]
 
 
 def test_generic_filter_items() -> None:
